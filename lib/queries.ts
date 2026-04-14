@@ -23,7 +23,7 @@ export async function getRefuelsWithDelta(params: {
 }): Promise<RefuelRow[]> {
   const { from, to } = params;
 
-  const rows = await db.execute<{
+  type Row = {
     id: number;
     employee_name: string;
     plate: string;
@@ -31,9 +31,11 @@ export async function getRefuelsWithDelta(params: {
     liters: string;
     amount: string;
     odometer_km: number;
-    refueled_at: Date;
+    refueled_at: string;
     km_since_previous: number | null;
-  }>(sql`
+  };
+
+  const result = await db.execute(sql`
     SELECT
       id,
       employee_name,
@@ -50,8 +52,7 @@ export async function getRefuelsWithDelta(params: {
     ORDER BY refueled_at DESC
   `);
 
-  // drizzle neon-http devuelve { rows } o array según versión
-  const list = Array.isArray(rows) ? rows : (rows as unknown as { rows: typeof rows }).rows;
+  const list = (result as unknown as { rows: Row[] }).rows;
 
   return list.map((r) => ({
     id: r.id,
